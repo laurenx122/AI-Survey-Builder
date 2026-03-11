@@ -20,8 +20,9 @@ export async function POST(req: NextRequest) {
       const result = await mammoth.extractRawText({ buffer })
       extractedText = result.value
     } else if (fileName.endsWith('.pdf')) {
-      // Dynamic import for pdf-parse
-      const pdfParse = (await import('pdf-parse')).default
+      
+      const pdfParse = await import('pdf-parse')
+      // @ts-ignore - tells TypeScript to ignore the missing types for this line
       const data = await pdfParse(buffer)
       extractedText = data.text
     } else if (fileName.endsWith('.txt')) {
@@ -35,12 +36,12 @@ export async function POST(req: NextRequest) {
 
     if (!extractedText.trim()) {
       return NextResponse.json(
-        { error: 'Could not extract text from this file. Make sure it is not a scanned image.' },
+        { error: 'Could not extract text. Make sure it is not a scanned image.' },
         { status: 400 }
       )
     }
 
-    // Limit text to 8000 chars to keep within AI token limits
+    // Limit text to 8000 chars to keep within Gemini's free tier limits
     const trimmedText = extractedText.trim().substring(0, 8000)
 
     return NextResponse.json({
